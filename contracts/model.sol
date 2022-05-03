@@ -8,6 +8,26 @@ contract Model {
         // int rsu;
     }
 
+    struct RSU_response {
+        int rsu;
+        int traffic;
+        int accident;
+        int reliabilityScore;
+    }
+
+    struct Vehicle_response {
+        int vehicle_id;
+        int past_rating;
+        int new_rating;
+    }
+
+    struct Input {
+        int rsu;
+        int[] _vehicle_ids;
+        int[] _traffic;
+        int[] _accident;
+    }
+
     int public constant MULTIPLIER = 100;
 
     address private admin;
@@ -29,8 +49,8 @@ contract Model {
     }
 
     function consensus(
-        int[] calldata _vehicle_ids,
-        int[] calldata _input
+        int[] memory _vehicle_ids,
+        int[] memory _input
     ) internal view returns(int output) {
         int total_rating = 0;
         int weighted_response = 0;
@@ -50,7 +70,7 @@ contract Model {
     }
 
     function find_reliability(
-        int[] calldata _vehicle_ids
+        int[] memory _vehicle_ids
     ) public view returns(int reliabilityScore) {
         int count = 0;
         int sum = 0;
@@ -79,10 +99,10 @@ contract Model {
 
     function compute_state(
         int _rsuID, 
-        int[] calldata _vehicle_ids,
-        int[] calldata _traffic,
-        int[] calldata _accident
-    ) external returns(int traffic, int accident, int reliabilityScore) {
+        int[] memory _vehicle_ids,
+        int[] memory _traffic,
+        int[] memory _accident
+    ) public returns(RSU_response memory rsu_resp) {
 
         // Ensuring clean data is sent
         require(_vehicle_ids.length > 0, "No data found");
@@ -95,9 +115,10 @@ contract Model {
         }
 
         // Calculating State
-        traffic = consensus(_vehicle_ids, _traffic);
-        accident = consensus(_vehicle_ids, _accident);
-        reliabilityScore = find_reliability(_vehicle_ids);
+        rsu_resp.rsu = _rsuID;
+        rsu_resp.traffic = consensus(_vehicle_ids, _traffic);
+        rsu_resp.accident = consensus(_vehicle_ids, _accident);
+        rsu_resp.reliabilityScore = find_reliability(_vehicle_ids);
 
         // Updating ratings of vehicle
         for(uint i=0; i<_vehicle_ids.length; ++i) {
@@ -106,9 +127,9 @@ contract Model {
             // Vehicles with rating <= 100 are blocked till they pay the penalty
             if (vehicle.rating <= 100) continue;
 
-            int traffic_dr = rating_change(traffic, _traffic[i], 5);
-            int accident_dr = rating_change(accident, _accident[i], 2);
-            int delta_rating = (traffic_dr + accident_dr) * reliabilityScore / (int256(_vehicle_ids.length) * MULTIPLIER);
+            int traffic_dr = rating_change(rsu_resp.traffic, _traffic[i], 5);
+            int accident_dr = rating_change(rsu_resp.accident, _accident[i], 2);
+            int delta_rating = (traffic_dr + accident_dr) * rsu_resp.reliabilityScore / (int256(_vehicle_ids.length) * MULTIPLIER);
             assert(-100 <= delta_rating && delta_rating <= 20);
 
             int updated_rating = vehicle.rating + delta_rating;
@@ -122,6 +143,55 @@ contract Model {
             }
         }
     }
+
+    function simulate(
+        Input[] calldata input
+    ) external returns(
+        RSU_response[] memory rsu_resp,
+        Vehicle_response[] memory vehicle_resp) {
+
+            uint tot_vehicles = 0;
+            uint tot_rsu = 0;
+
+            // Calculating # of vehicles & RSUs
+            for(uint i=0; i<input.length;++i) {
+                tot_vehicles += input[i]._vehicle_ids.length;
+                if (input[i].rsu !=0) tot_rsu += 1;
+            }
+
+            rsu_resp = new RSU_response[](tot_rsu);
+            vehicle_resp = new Vehicle_response[](tot_vehicles);
+
+            // Initialising vehicle_resp
+            uint id = 0;
+            for(uint i=0; i<input.length;++i) {
+                for(uint j=0; j<input[i]._vehicle_ids.length; ++j) {
+                    Vehicle storage vehicle = vehicles[input[i]._vehicle_ids[j]];
+                    vehicle_resp[id] = Vehicle_response(
+                        input[i]._vehicle_ids[j],
+                        vehicle.rating,
+                        vehicle.rating
+                    );
+                    id += 1;
+                }
+            }
+
+            // Solving for each RSU
+            for(uint i=0; i<input.length; ++i) {
+                rsu_resp[i] = compute_state(
+                    input[i].rsu,
+                    input[i]._vehicle_ids,
+                    input[i]._traffic,
+                    input[i]._accident
+                );
+            }
+            
+            // Updating new rating of vehicle_resp
+            for(uint i=0; i<vehicle_resp.length; ++i) {
+                Vehicle storage vehicle = vehicles[vehicle_resp[i].vehicle_id];
+                vehicle_resp[i].new_rating = vehicle.rating;
+            }
+        }
 
     function overwrite_rating(int vehicle_id, int rating) external onlyAdmin {
         Vehicle storage vehicle = vehicles[vehicle_id];
