@@ -4,6 +4,7 @@ pragma solidity >=0.7.0 <0.9.0;
 contract Model {
 
     struct Vehicle {
+        int id;
         int rating;
         // int rsu;
     }
@@ -44,8 +45,17 @@ contract Model {
     }
 
     function register_vehicle() external returns (int) {
-        vehicles[++vehicle_count] = Vehicle(500);
+        vehicle_count += 1;
+        vehicles[vehicle_count] = Vehicle(vehicle_count,500);
         return vehicle_count;
+    }
+
+    function get_all_vehicles() external view returns(Vehicle[] memory all_vehicle) {
+        all_vehicle = new Vehicle[](uint(vehicle_count));
+        for(uint i=1; int(i)<=vehicle_count; ++i) {
+            Vehicle storage vehicle = vehicles[int(i)];
+            all_vehicle[i-1] = vehicle;
+        }
     }
 
     function consensus(
