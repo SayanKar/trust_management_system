@@ -1,3 +1,8 @@
+import {
+  GridColDef,
+  GridValueGetterParams,
+} from '@mui/x-data-grid';
+
 export const columns = [
     { field: 'vehicle_id', 
       headerName: 'Vehicle Id',
@@ -21,5 +26,12 @@ export const columns = [
       type: 'boolean',
       width: 220,
       editable: true,
+    },
+    {
+      field: 'rating',
+      headerName: 'Rating',
+      type: "Number",
+      editable: false,
+      width: 170,
     }
   ];

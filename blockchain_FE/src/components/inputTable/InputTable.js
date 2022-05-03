@@ -1,5 +1,4 @@
 import React from "react";
-import { rows } from "./rows";
 import { columns } from "./columns";
 import Table from "../Table_Layout/Table";
 
