@@ -25,9 +25,16 @@ export default function BodyinModal(props){
     return(
         <FormControl>
           <div style={{display:"flex",justifyContent:"space-evenly"}}>
+            <div style={{display: "flex", alignItems: "center"}} className="textField wrapper">
             <TextField
             id="vehicle_id"
             label="Vehicle_Id"
+            onChange={onTextChange(value,id)}
+            fullWidth
+            />
+            <TextField
+            id="vehicle_id_2"
+            label="Vehicle_Id_2"
             onChange={onTextChange(value,id)}
             fullWidth
             />
@@ -56,6 +63,7 @@ export default function BodyinModal(props){
             fullWidth
             />
             <Button onClick={onSubmit}>Submit</Button>
+            </div>
          </div>
         </FormControl>
     )
