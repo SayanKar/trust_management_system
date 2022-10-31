@@ -29,4 +29,14 @@ export const NETWORKS_LIST = {
     },
     rpcUrls: ["https://rpcapi.fantom.network/"],
   },
+  goerli: {
+    chainId: "0x5",
+    chainName: "goerli",
+    nativeCurrency: {
+      name: "Ether",
+      symbol: "ETH",
+      decimals: 18,
+    },
+    rpcUrls: ["https://goerli.infura.io/v3/"],
+  },
 };
