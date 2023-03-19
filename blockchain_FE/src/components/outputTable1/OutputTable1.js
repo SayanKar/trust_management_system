@@ -5,6 +5,15 @@ import Table from "../Table_Layout/Table";
 
 export default function OutputTable1(){
     return(
-        <Table rows={rows} columns={columns} />
+        <div 
+            style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center"
+            }} 
+            id="OutputTable1"
+        >
+            <Table rows={rows} columns={columns} title="table1"/>
+        </div>
     )
 }
